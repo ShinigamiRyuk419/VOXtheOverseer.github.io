@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Vox</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            transition: background 0.5s ease-in-out;
+        }
+
+        #chat-container {
+            width: 450px;
+            max-width: 90%;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            margin: 0;
+            color: black;
+        }
+
+        #chatbox {
+            height: 400px;
+            overflow-y: auto;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            scrollbar-width: none;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            word-wrap: break-word;
+            font-size: 14px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeInUp 0.3s forwards ease-in-out;
+        }
+
+        .user {
+            background: #0078ff;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0;
+        }
+
+        .bot {
+            background: rgba(255, 255, 255, 0.5);
+            color: black;
+            align-self: flex-start;
+            border-bottom-left-radius: 0;
+        }
+
+        #input-container {
+            display: flex;
+            margin-top: 15px;
+        }
+
+        #input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.6);
+            outline: none;
+        }
+
+        .button {
+            background: #0078ff;
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            margin-left: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .button:hover {
+            transform: scale(1.1);
+        }
+
+        #toggle-dark-mode {
+            background: #333;
+            color: white;
+            border-radius: 10px;
+        }
+
+        .dark-mode {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+        }
+
+        .dark-mode h2 {
+            color: white;
+        }
+
+        .dark-mode #chat-container {
+            background: rgba(20, 20, 30, 0.9);
+        }
+
+        .dark-mode .bot {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">
+            <h2>Vox The Overseer 🤖</h2>
+            <div>
+                <button id="reset" class="button">🔄</button>
+                <button id="toggle-dark-mode" class="button">🌙</button>
+            </div>
+        </div>
+        <div id="chatbox"></div>
+        <div id="input-container">
+            <input type="text" id="input" placeholder="Type a message...">
+            <button id="send" class="button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const webhookURL = "https://geidi.app.n8n.cloud/webhook/dc6cc594-ff1a-4b7e-9c08-be4a9f08e223"; 
+        const resetWebhookURL = "https://geidi.app.n8n.cloud/webhook/5c3ba0a6-3ce0-467f-b6aa-bf5b6fdb9245";
+
+        document.getElementById("send").addEventListener("click", sendMessage);
+        document.getElementById("reset").addEventListener("click", resetChat);
+        document.getElementById("toggle-dark-mode").addEventListener("click", toggleDarkMode);
+        document.getElementById("input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") sendMessage();
+        });
+
+        function sendMessage() {
+            let inputField = document.getElementById("input");
+            let message = inputField.value.trim();
+            if (message === "") return;
+
+            addMessage("user", message);
+            inputField.value = "";
+
+            fetch(webhookURL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: message }) })
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(item => { if (item.output) addMessage("bot", item.output.trim()); });
+            })
+            .catch(() => addMessage("bot", "Error: Unable to reach Vox 🤖"));
+        }
+
+        function resetChat() {
+  	document.getElementById("chatbox").innerHTML = "";
+	}
+
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+
+        function addMessage(sender, text) {
+            let chatbox = document.getElementById("chatbox");
+            let msgDiv = document.createElement("div");
+            msgDiv.classList.add("message", sender);
+            msgDiv.innerHTML = text.replace(/\n/g, "<br>");
+            chatbox.appendChild(msgDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
